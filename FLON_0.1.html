@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Flash Light or Not</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    background: #1a1a2e;
+    color: #e0e0e0;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    user-select: none;
+  }
+
+  h1 {
+    font-size: 2rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    margin-bottom: 4px;
+    color: #f5c842;
+    text-shadow: 0 0 18px #f5c84255;
+    text-align: center;
+  }
+
+  .subtitle {
+    font-size: 0.95rem;
+    color: #888;
+    margin-bottom: 28px;
+    text-align: center;
+  }
+
+  .scoreboard {
+    display: flex;
+    gap: 24px;
+    margin-bottom: 28px;
+  }
+
+  .score-box {
+    background: #16213e;
+    border: 1px solid #2a2a4a;
+    border-radius: 12px;
+    padding: 10px 22px;
+    text-align: center;
+  }
+
+  .score-label {
+    font-size: 0.72rem;
+    color: #666;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  .score-value {
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: #f5c842;
+  }
+
+  .round-label {
+    font-size: 0.8rem;
+    color: #888;
+    margin-bottom: 10px;
+    text-align: center;
+  }
+
+  .blanket-area {
+    position: relative;
+    width: 340px;
+    height: 260px;
+    cursor: pointer;
+    margin-bottom: 20px;
+  }
+
+  .blanket {
+    width: 100%;
+    height: 100%;
+    border-radius: 18px;
+    background: repeating-linear-gradient(
+      135deg,
+      #2d4a6e 0px, #2d4a6e 20px,
+      #1e3456 20px, #1e3456 40px
+    );
+    border: 2px solid #3a5a8a;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.1s;
+  }
+
+  .blanket:active { transform: scale(0.98); }
+
+  .blanket-texture {
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(
+      45deg,
+      transparent 0px, transparent 18px,
+      rgba(255,255,255,0.025) 18px, rgba(255,255,255,0.025) 20px
+    );
+    border-radius: 16px;
+  }
+
+  .blanket-bump {
+    position: absolute;
+    background: rgba(255,255,255,0.07);
+    border-radius: 50%;
+    pointer-events: none;
+    transition: opacity 0.5s;
+  }
+
+  .blanket-label {
+    font-size: 0.9rem;
+    color: rgba(255,255,255,0.4);
+    z-index: 2;
+    text-align: center;
+    line-height: 1.5;
+  }
+
+  .clue-panel {
+    background: #16213e;
+    border: 1px solid #2a2a4a;
+    border-radius: 14px;
+    padding: 14px 20px;
+    width: 340px;
+    margin-bottom: 20px;
+    min-height: 80px;
+  }
+
+  .clue-title {
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: #f5c842;
+    margin-bottom: 8px;
+  }
+
+  .clue-text {
+    font-size: 0.95rem;
+    color: #ccc;
+    line-height: 1.5;
+    min-height: 42px;
+    transition: opacity 0.3s;
+  }
+
+  .clue-hint {
+    font-size: 0.78rem;
+    color: #555;
+    margin-top: 6px;
+  }
+
+  .buttons {
+    display: flex;
+    gap: 14px;
+    margin-bottom: 22px;
+  }
+
+  .btn {
+    padding: 12px 36px;
+    font-size: 1rem;
+    font-weight: 700;
+    border-radius: 10px;
+    border: none;
+    cursor: pointer;
+    transition: transform 0.1s, background 0.15s, opacity 0.2s;
+    letter-spacing: 0.03em;
+  }
+
+  .btn:active { transform: scale(0.96); }
+  .btn:disabled { opacity: 0.35; cursor: default; transform: none; }
+
+  .btn-flashlight {
+    background: #f5c842;
+    color: #1a1a2e;
+  }
+
+  .btn-not {
+    background: #2d4a6e;
+    color: #a0c4ff;
+    border: 1.5px solid #3a5a8a;
+  }
+
+  .btn-flashlight:hover:not(:disabled) { background: #ffd84a; }
+  .btn-not:hover:not(:disabled) { background: #3a5a8a; }
+
+  .result-overlay {
+    display: none;
+    position: absolute;
+    inset: 0;
+    border-radius: 16px;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 8px;
+    font-size: 1.2rem;
+    font-weight: 700;
+    z-index: 10;
+  }
+
+  .result-overlay.show { display: flex; }
+
+  .result-overlay.correct {
+    background: rgba(80, 200, 100, 0.92);
+    color: #0a2010;
+  }
+
+  .result-overlay.wrong {
+    background: rgba(200, 60, 60, 0.92);
+    color: #2a0808;
+  }
+
+  .result-icon { font-size: 2.4rem; }
+
+  .object-reveal {
+    font-size: 0.9rem;
+    font-weight: 400;
+    opacity: 0.85;
+  }
+
+  .next-btn {
+    background: #1a1a2e;
+    color: #f5c842;
+    border: 1.5px solid #f5c842;
+    padding: 8px 22px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    border-radius: 8px;
+    cursor: pointer;
+    margin-top: 4px;
+    transition: background 0.15s;
+  }
+
+  .next-btn:hover { background: #f5c84222; }
+
+  .game-over-screen {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+    text-align: center;
+    animation: fadein 0.4s;
+  }
+
+  .game-over-screen.show { display: flex; }
+
+  .go-title {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #f5c842;
+  }
+
+  .go-score {
+    font-size: 1.1rem;
+    color: #aaa;
+  }
+
+  .go-big {
+    font-size: 3rem;
+    font-weight: 700;
+    color: #fff;
+  }
+
+  .go-grade {
+    font-size: 1rem;
+    color: #888;
+    font-style: italic;
+  }
+
+  .restart-btn {
+    margin-top: 8px;
+    background: #f5c842;
+    color: #1a1a2e;
+    border: none;
+    padding: 12px 40px;
+    font-size: 1rem;
+    font-weight: 700;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background 0.15s, transform 0.1s;
+  }
+
+  .restart-btn:hover { background: #ffd84a; }
+  .restart-btn:active { transform: scale(0.97); }
+
+  @keyframes fadein { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
+
+  .feel-indicator {
+    font-size: 0.78rem;
+    color: #888;
+    text-align: center;
+    margin-bottom: 4px;
+  }
+
+  .touches-left {
+    font-size: 0.78rem;
+    color: #666;
+    text-align: center;
+    margin-top: -14px;
+    margin-bottom: 14px;
+  }
+
+  .tap-ripple {
+    position: absolute;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: rgba(245, 200, 66, 0.18);
+    pointer-events: none;
+    transform: translate(-50%, -50%) scale(0);
+    animation: ripple 0.5s ease-out forwards;
+  }
+
+  @keyframes ripple {
+    to { transform: translate(-50%, -50%) scale(2.5); opacity: 0; }
+  }
+</style>
+</head>
+<body>
+
+<h1>🔦 Flash Light or Not?</h1>
+<p class="subtitle">Feel what's under the blanket. Guess if it's a flashlight.</p>
+
+<div class="scoreboard">
+  <div class="score-box">
+    <div class="score-label">Score</div>
+    <div class="score-value" id="score">0</div>
+  </div>
+  <div class="score-box">
+    <div class="score-label">Streak</div>
+    <div class="score-value" id="streak">0</div>
+  </div>
+</div>
+
+<div id="game-area">
+  <div class="round-label" id="round-label">Round 1 of 10</div>
+
+  <div class="feel-indicator">👆 Tap the blanket to feel around</div>
+
+  <div class="blanket-area" id="blanket-area">
+    <div class="blanket" id="blanket" onclick="feelObject(event)">
+      <div class="blanket-texture"></div>
+      <div class="blanket-label" id="blanket-label">Tap to feel<br>what's underneath</div>
+    </div>
+    <div class="result-overlay" id="result-overlay">
+      <div class="result-icon" id="result-icon"></div>
+      <div id="result-text"></div>
+      <div class="object-reveal" id="object-reveal"></div>
+      <button class="next-btn" onclick="nextRound()">Next round →</button>
+    </div>
+  </div>
+
+  <div class="touches-left" id="touches-left"></div>
+
+  <div class="clue-panel">
+    <div class="clue-title">What you feel</div>
+    <div class="clue-text" id="clue-text">Tap the blanket to start feeling the object...</div>
+    <div class="clue-hint" id="clue-hint"></div>
+  </div>
+
+  <div class="buttons">
+    <button class="btn btn-flashlight" id="btn-flash" onclick="guess(true)" disabled>🔦 Flashlight!</button>
+    <button class="btn btn-not" id="btn-not" onclick="guess(false)" disabled>❌ Not a flashlight</button>
+  </div>
+</div>
+
+<div class="game-over-screen" id="game-over">
+  <div class="go-title">Game Over!</div>
+  <div class="go-big" id="go-score-big"></div>
+  <div class="go-score">out of 10</div>
+  <div class="go-grade" id="go-grade"></div>
+  <button class="restart-btn" onclick="startGame()">Play Again</button>
+</div>
+
+<script>
+const OBJECTS = [
+  {
+    name: "Cylinder flashlight",
+    isFlashlight: true,
+    clues: [
+      "You feel something long and cylindrical… smooth metal body.",
+      "It's rigid. Hard. Feels hollow inside — like there's something rattling faintly.",
+      "One end feels flat with a small raised nub. The other is wider, glassy.",
+      "There's a ridged grip section near the middle. Definitely cylindrical.",
+    ]
+  },
+  {
+    name: "Banana",
+    isFlashlight: false,
+    clues: [
+      "You feel something curved… kind of long but bendy at the tip.",
+      "It's soft, slightly waxy to the touch. Peeling sensation at one end.",
+      "It squishes a little under pressure. Definitely not hollow metal.",
+      "It smells faintly sweet even through the blanket. Kind of mushy at the tip.",
+    ]
+  },
+  {
+    name: "TV remote control",
+    isFlashlight: false,
+    clues: [
+      "Flat and rectangular. About the length of your hand.",
+      "One side is smooth plastic, the other has rows of small raised buttons.",
+      "It's lightweight. Feels like hollow plastic — maybe a battery compartment on the back.",
+      "The buttons have different sizes. A big one at the top, tiny ones in the middle.",
+    ]
+  },
+  {
+    name: "Pen flashlight",
+    isFlashlight: true,
+    clues: [
+      "It's narrow and cylindrical — about the size of a thick pen.",
+      "Metal body. Cool and smooth. Tiny clip on one side.",
+      "One end twists — you can feel the threading. The other end has a glass lens.",
+      "When you press the clicker at the top, something clicks mechanically.",
+    ]
+  },
+  {
+    name: "Water bottle",
+    isFlashlight: false,
+    clues: [
+      "Round and tall. Smooth plastic walls that flex slightly under pressure.",
+      "It sloshes — liquid is moving inside when you tilt it.",
+      "There's a screw-on cap at the top. Wide base, slightly tapered at the top.",
+      "It's heavier than expected. Cold to the touch through the blanket.",
+    ]
+  },
+  {
+    name: "Sneaker",
+    isFlashlight: false,
+    clues: [
+      "Soft and bulky. One end is stiff, the other flexible and rubbery.",
+      "You feel laces — criss-crossing fabric strings on top.",
+      "The bottom is bumpy and thick — deep rubber treads.",
+      "It's hollow inside, like a tube for a foot. Definitely fabric and rubber.",
+    ]
+  },
+  {
+    name: "Headlamp flashlight",
+    isFlashlight: true,
+    clues: [
+      "A boxy chunk attached to a stretchy elastic strap.",
+      "The front face is hard plastic with a circular lens in the center.",
+      "The elastic goes around — you can feel the adjustment buckle.",
+      "The back has a smooth plastic battery compartment with a seam.",
+    ]
+  },
+  {
+    name: "Roll of tape",
+    isFlashlight: false,
+    clues: [
+      "It's round and flat — like a thick disc. Hard plastic center hole.",
+      "The outside is smooth and slightly sticky at the edge.",
+      "Hollow in the middle, rigid. Feels like a roll of something wound tight.",
+      "You can feel the end of the tape slightly peeled up. Sticky and thin.",
+    ]
+  },
+  {
+    name: "Can of soup",
+    isFlashlight: false,
+    clues: [
+      "Cylindrical and heavy. Smooth metal sides, totally solid and rigid.",
+      "Both flat ends — a slightly raised rim top and bottom.",
+      "No hollow feel at all. Way too heavy. Contents don't move.",
+      "The label is paper — you feel the edge of it underneath the blanket.",
+    ]
+  },
+  {
+    name: "Tactical flashlight",
+    isFlashlight: true,
+    clues: [
+      "Thick, heavy cylinder. Knurled grip — lots of tiny diamond-cut ridges.",
+      "One end has a raised bezel — jagged serrated edge around the lens.",
+      "A button on the tail end clicks firmly. Spring-loaded feel.",
+      "Solid, dense metal. The head is wider than the body with a big reflective lens.",
+    ]
+  },
+  {
+    name: "Hairbrush",
+    isFlashlight: false,
+    clues: [
+      "Oval paddle shape with a handle. One side is smooth, one side has bristles.",
+      "The bristles are flexible and pokey — lots of small rubber-tipped pins.",
+      "Handle is smooth plastic with slight grip texture. Flat on one face.",
+      "It's light and hollow-sounding when you tap it. Definitely not metal.",
+    ]
+  },
+  {
+    name: "Thick marker",
+    isFlashlight: false,
+    clues: [
+      "Cylindrical and smooth. About the size of a large thumb.",
+      "Both ends are capped. One end has a squishy felt tip under the cap.",
+      "Light and plastic. No glass, no weight, no real rigidity to it.",
+      "Smells faintly of ink even through the blanket. Definitely not metal.",
+    ]
+  },
+  {
+    name: "Lantern flashlight",
+    isFlashlight: true,
+    clues: [
+      "Wide, squat, boxy shape. Not a cylinder — more like a cube with a handle.",
+      "A folding metal handle on top. The sides are translucent frosted plastic.",
+      "A flat rubber button on the side. The base is heavy and rubbery.",
+      "Feels like battery compartment on the bottom — a latch and a cover.",
+    ]
+  },
+  {
+    name: "Toothbrush",
+    isFlashlight: false,
+    clues: [
+      "Long, thin, flat plastic handle. One end has a small oval head.",
+      "The head has soft bristles arranged in rows — you can feel each tuft.",
+      "Lightweight hollow plastic. Slightly flexible. No metal at all.",
+      "The handle has a rubber grip strip near the bottom. Very light.",
+    ]
+  },
+  {
+    name: "Wooden spoon",
+    isFlashlight: false,
+    clues: [
+      "Long, straight, wooden handle. Smooth and slightly rough grain texture.",
+      "One end is a curved bowl-shaped scoop — definitely not a lens.",
+      "Lightweight. The wood feels slightly warm. A very different feel than metal.",
+      "No buttons, no glass, no hollow metal barrel. Just smooth carved wood.",
+    ]
+  },
+];
+
+let currentRound = 0;
+let score = 0;
+let streak = 0;
+let totalRounds = 10;
+let currentObject = null;
+let touchCount = 0;
+let maxTouches = 4;
+let guessLocked = false;
+let roundObjects = [];
+
+function shuffle(arr) {
+  let a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    let j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function startGame() {
+  score = 0; streak = 0; currentRound = 0;
+  document.getElementById('score').textContent = '0';
+  document.getElementById('streak').textContent = '0';
+  document.getElementById('game-over').classList.remove('show');
+  document.getElementById('game-area').style.display = '';
+
+  // Build balanced round set: ~5 flashlights, ~5 not
+  const flashlights = shuffle(OBJECTS.filter(o => o.isFlashlight));
+  const others = shuffle(OBJECTS.filter(o => !o.isFlashlight));
+  roundObjects = shuffle([...flashlights.slice(0, 5), ...others.slice(0, 5)]);
+
+  loadRound();
+}
+
+function loadRound() {
+  guessLocked = false;
+  touchCount = 0;
+  currentObject = roundObjects[currentRound];
+
+  document.getElementById('round-label').textContent = `Round ${currentRound + 1} of ${totalRounds}`;
+  document.getElementById('blanket-label').textContent = 'Tap to feel\nwhat\'s underneath';
+  document.getElementById('blanket-label').style.whiteSpace = 'pre';
+  document.getElementById('clue-text').textContent = 'Tap the blanket to start feeling the object...';
+  document.getElementById('clue-hint').textContent = '';
+  document.getElementById('touches-left').textContent = `Tap up to ${maxTouches} times for more clues`;
+
+  const overlay = document.getElementById('result-overlay');
+  overlay.className = 'result-overlay';
+
+  document.getElementById('btn-flash').disabled = true;
+  document.getElementById('btn-not').disabled = true;
+
+  // Clear bumps
+  const blanket = document.getElementById('blanket');
+  document.querySelectorAll('.blanket-bump').forEach(b => b.remove());
+}
+
+function feelObject(e) {
+  if (guessLocked) return;
+
+  const blanket = document.getElementById('blanket');
+  const rect = blanket.getBoundingClientRect();
+  const x = (e.clientX || e.touches?.[0]?.clientX || rect.left + rect.width/2) - rect.left;
+  const y = (e.clientY || e.touches?.[0]?.clientY || rect.top + rect.height/2) - rect.top;
+
+  // Ripple
+  const ripple = document.createElement('div');
+  ripple.className = 'tap-ripple';
+  ripple.style.left = x + 'px';
+  ripple.style.top = y + 'px';
+  blanket.appendChild(ripple);
+  setTimeout(() => ripple.remove(), 600);
+
+  // Bump under blanket
+  if (touchCount < maxTouches) {
+    const bump = document.createElement('div');
+    bump.className = 'blanket-bump';
+    const size = 40 + Math.random() * 40;
+    bump.style.width = size + 'px';
+    bump.style.height = size + 'px';
+    bump.style.left = (x - size/2) + 'px';
+    bump.style.top = (y - size/2) + 'px';
+    blanket.appendChild(bump);
+  }
+
+  if (touchCount < maxTouches) {
+    const clue = currentObject.clues[touchCount];
+    document.getElementById('clue-text').textContent = clue;
+
+    touchCount++;
+    const remaining = maxTouches - touchCount;
+
+    if (remaining > 0) {
+      document.getElementById('touches-left').textContent = `${remaining} tap${remaining !== 1 ? 's' : ''} left`;
+      document.getElementById('clue-hint').textContent = 'Keep tapping for more details...';
+    } else {
+      document.getElementById('touches-left').textContent = "You've felt everything you can.";
+      document.getElementById('clue-hint').textContent = 'Make your guess!';
+    }
+
+    document.getElementById('btn-flash').disabled = false;
+    document.getElementById('btn-not').disabled = false;
+    document.getElementById('blanket-label').textContent = '';
+  }
+}
+
+function guess(isFlashlight) {
+  if (guessLocked) return;
+  guessLocked = true;
+
+  document.getElementById('btn-flash').disabled = true;
+  document.getElementById('btn-not').disabled = true;
+
+  const correct = (isFlashlight === currentObject.isFlashlight);
+
+  if (correct) {
+    score++;
+    streak++;
+    document.getElementById('score').textContent = score;
+    document.getElementById('streak').textContent = streak;
+  } else {
+    streak = 0;
+    document.getElementById('streak').textContent = '0';
+  }
+
+  const overlay = document.getElementById('result-overlay');
+  overlay.className = 'result-overlay show ' + (correct ? 'correct' : 'wrong');
+  document.getElementById('result-icon').textContent = correct ? '✅' : '❌';
+  document.getElementById('result-text').textContent = correct ? 'Correct!' : 'Wrong!';
+  document.getElementById('object-reveal').textContent = `It was: ${currentObject.name}`;
+}
+
+function nextRound() {
+  currentRound++;
+  if (currentRound >= totalRounds) {
+    showGameOver();
+  } else {
+    loadRound();
+  }
+}
+
+function showGameOver() {
+  document.getElementById('game-area').style.display = 'none';
+  const go = document.getElementById('game-over');
+  go.classList.add('show');
+  document.getElementById('go-score-big').textContent = score;
+
+  const grades = [
+    [10, "🏆 Perfect score! You have the hands of a detective."],
+    [8, "🌟 Excellent! Sharp senses."],
+    [6, "👍 Pretty good! A few objects tricked you."],
+    [4, "😅 Decent, but the blanket fooled you plenty."],
+    [2, "🤔 Maybe try using a different hand next time?"],
+    [0, "😂 You couldn't tell a flashlight from a banana. Impressive."],
+  ];
+  const grade = grades.find(([min]) => score >= min);
+  document.getElementById('go-grade').textContent = grade[1];
+}
+
+startGame();
+</script>
+</body>
+</html>
